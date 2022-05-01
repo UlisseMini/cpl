@@ -44,6 +44,9 @@ Token next_token() {
     } else if (isalpha(c)) {
       tok.type = IDENT;
       advance_while(isalnum);
+    } else if (isdigit(c)) {
+      tok.type = NUMBER;
+      advance_while(isdigit);
     }
 
     if (tok.type == END)

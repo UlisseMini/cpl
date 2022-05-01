@@ -14,6 +14,7 @@ static char buf[BUF_SIZE];
 typedef enum {
   IDENTIFIER,
   LIST,
+  NUMERIC, // TODO: Fix duplicatino between expr_type and token_type
 } expr_type;
 
 typedef struct SExpr {
@@ -80,11 +81,22 @@ List* parse_list() {
   return head;
 }
 
+int* toktoi(Token tok) {
+  char old = buf[tok.end];
+  buf[tok.end] = '\0';
+  int* ret = malloc(sizeof(int));
+  *ret = atoi(buf + tok.start);
+  buf[tok.end] = old;
+  return ret;
+}
+
 SExpr* parse_expr() {
   Token tok = advance();
   switch (tok.type) {
     case IDENT:
       return new_sexpr(IDENTIFIER, tok, NULL);
+    case NUMBER:
+      return new_sexpr(NUMERIC, tok, toktoi(tok));
     case LPAREN:
       return new_sexpr(LIST, tok, parse_list());
     case RPAREN:
@@ -108,6 +120,9 @@ void print_sexpr(SExpr* expr) {
       tok = expr->tok;
       for (int i = tok.start; i < tok.end; i++)
         putchar(buf[i]);
+      break;
+    case NUMERIC:
+      printf("%d", *(int*)expr->value);
       break;
     case LIST:
       printf("(");
