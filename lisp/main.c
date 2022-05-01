@@ -86,7 +86,7 @@ SExpr* parse_expr() {
 
       break;
     case RPAREN:
-      /* die("rparen not expected"); */
+      die("rparen not expected");
       break;
     case END:
       fprintf(stderr, "reached end, returning null\n");
@@ -110,12 +110,13 @@ void print_sexpr(SExpr* expr) {
       tok = expr->tok;
       for (int i = tok.start; i < tok.end; i++)
         putchar(buf[i]);
-      putchar(' ');
       break;
     case LIST:
       printf("(");
       for (List* l  = expr->value; l != NULL; l = l->next) {
         print_sexpr(l->value);
+        if (l->next != NULL)
+          putchar(' ');
       }
       printf(")");
       break;
