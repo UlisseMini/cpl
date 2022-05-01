@@ -19,9 +19,9 @@ void init_scanner(char* input) {
 
 static char peek() { return pos < len ? buf[pos] : '\0'; }
 static char advance() { return pos < len ? buf[pos++] : '\0';  }
-static bool advance_if(char c) {
-  return (peek() == c) ? advance() : false;
-}
+/* static bool advance_if(char c) { */
+/*   return (peek() == c) ? advance() : false; */
+/* } */
 
 static void advance_while(int pred(int c)) {
   char c;

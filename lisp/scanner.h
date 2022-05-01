@@ -3,7 +3,6 @@ typedef enum {
   LPAREN,
   RPAREN,
   IDENT,
-  STRING,
 } token_type;
 
 typedef struct {
