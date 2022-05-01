@@ -5,7 +5,6 @@
 
 #include "scanner.h"
 
-
 #define BUF_SIZE 1024*1024
 
 static char buf[BUF_SIZE];
@@ -36,12 +35,11 @@ static Token advance() {
 }
 static Token peek() { return curr_token; }
 
-/* static Token advance_if(token_type t) { */
-/*   if (peek().type == t) */
-/*     return advance(); */
-/* } */
+void init_parser() {
+  curr_token = next_token();
+}
 
-List* list_new(void* v) {
+List* new_list(void* v) {
   List* l = malloc(sizeof(List));
   l->value = v;
   l->next = NULL;
@@ -49,7 +47,7 @@ List* list_new(void* v) {
 }
 
 List* append(List* head, void* v) {
-  List* new = list_new(v);
+  List* new = new_list(v);
   if (head == NULL) {
     return new;
   }
@@ -61,48 +59,48 @@ List* append(List* head, void* v) {
   return head;
 }
 
-void die(char* msg) {
-  fprintf(stderr, "error: %s\n", msg);
+void die(Token t, char* msg) {
+  fprintf(stderr, "parse error (%d - %d): %s\n", t.start, t.end, msg);
   exit(EXIT_FAILURE);
 }
 
-SExpr* parse_expr() {
+SExpr* new_sexpr(expr_type type, Token tok, void* value) {
   SExpr* e = malloc(sizeof(SExpr));
-
-  Token t = advance();
-  e->tok = t;
-  switch (t.type) {
-    case IDENT:
-      e->type = IDENTIFIER;
-      e->value = NULL; /* lexeme is in e->tok */
-      break;
-    case LPAREN:
-      e->type = LIST;
-      List* head = NULL;
-      while (peek().type != RPAREN && peek().type != END)
-        head = append(head, parse_expr());
-      e->value = head;
-      t = advance(); // consume rparen
-
-      break;
-    case RPAREN:
-      die("rparen not expected");
-      break;
-    case END:
-      fprintf(stderr, "reached end, returning null\n");
-      free(e);
-      e = NULL;
-      break;
-  }
+  e->type = type; e->tok = tok; e->value = value;
   return e;
+}
+
+List* parse_list() {
+  extern SExpr* parse_expr();
+  // TODO: Keep reference to tail for quick append
+  List* head = NULL;
+  while (peek().type != RPAREN && peek().type != END)
+    head = append(head, parse_expr());
+  advance(); // consume rparen
+  return head;
+}
+
+SExpr* parse_expr() {
+  Token tok = advance();
+  switch (tok.type) {
+    case IDENT:
+      return new_sexpr(IDENTIFIER, tok, NULL);
+    case LPAREN:
+      return new_sexpr(LIST, tok, parse_list());
+    case RPAREN:
+      die(tok, "rparen not expected");
+      return NULL;
+    case END:
+      fprintf(stderr, "warning: at end, returning null from parse_expr()\n");
+      return NULL;
+  }
 }
 
 void print_sexpr(SExpr* expr) {
   if (expr == NULL) {
-    printf("null");
+    printf("nil");
     return;
   }
-
 
   Token tok;
   switch (expr->type) {
@@ -133,7 +131,7 @@ int main() {
   }
 
   init_scanner(buf);
-  curr_token = next_token(); // SO UGLY
+  init_parser();
   SExpr* expr = parse_expr();
   print_sexpr(expr);
   printf("\n");
